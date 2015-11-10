@@ -29,7 +29,6 @@ if sys.argv[6] is not None:
 # TCP connection occurs at startup
 TCP_IP = socket.gethostbyname(socket.gethostname())
 
-print TCP_PORT
 TCP_PORT = ACK_PORT_NUM
 BUFFER = 1024
 
@@ -100,7 +99,7 @@ for text in packet_txt:
 
 
     # tcp header fields
-    tcp_source = 5005   # source port
+    tcp_source = ACK_PORT_NUM   # source port
     tcp_dest = REMOTE_PORT   # destination port
     tcp_seq = seq_number # multiply by size of data
     tcp_ack_seq = 0

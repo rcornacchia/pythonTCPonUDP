@@ -89,8 +89,6 @@ while True:
         # now start constructing the packet
         packet = '';
 
-        source_ip = '127.0.0.1'
-        dest_ip = '127.0.0.1' # or socket.gethostbyname('www.google.com')
 
         # tcp header fields
         tcp_source = tcp_header[0]   # source port
@@ -123,16 +121,16 @@ while True:
             print "checksum does not match, corruption detected."
             break
         # Check to see if in order
-        if seq_number == expected_seq_num:
-            expected_seq_num += 1
-        else:
-            break
+        # if seq_number == expected_seq_num:
+        #     expected_seq_num += 1
+        # else:
+        #     break
         # if correct packet is received in order, then pack ACK and send
         # now start constructing the packet
         packet = '';
         # tcp header fields
-        tcp_source = 5555   # source port
-        tcp_dest = 5555 # destination port
+        tcp_source = LISTENING_PORT   # source port
+        tcp_dest = TCP_PORT # destination port
         tcp_seq = int(seq_number) # multiply by size of data
         tcp_ack_seq = int(seq_number)
         tcp_doff = 5    #4 bit field, size of tcp header, 5 * 4 = 20 bytes
