@@ -6,41 +6,35 @@ from struct import *
 
 #usage: sender <filename> <remote_IP> <remote_port> <ack_port_num> <log_filename> <window_size>
 
-# # argv[1] = file_to_send
-# # argv[2] = remote_ip
-# REMOTE_IP = sys.argv[2]
-#
-# # argv[3] = remote_port
-# REMOTE_PORT = sys.argv[3]
-#
-# # argv[4] = ack_port_num
-# ACK_PORT_NUM = sys.argv[4]
-#
-# # argv[5] = log_filename
-#
-# # argv[6] = window_size
-# WINDOW_SIZE = sys.argv[6]
-WINDOW_SIZE = 3
+# argv[1] = file_to_send
+# argv[2] = remote_ip
+REMOTE_IP = str(sys.argv[2])
 
+# argv[3] = remote_port
+REMOTE_PORT = int(sys.argv[3])
 
+# argv[4] = ack_port_num
+ACK_PORT_NUM = int(sys.argv[4])
 
+# argv[5] = log_filename
+# log_file = argv[5]
+WINDOW_SIZE = 1
+# argv[6] = window_size
+if sys.argv[5] is not None:
+    WINDOW_SIZE = int(sys.argv[5])
 
+print WINDOW_SIZE
 # TCP connection occurs at startup
 TCP_IP = '127.0.0.1'
-TCP_PORT = int(sys.argv[2])
+TCP_PORT = ACK_PORT_NUM
 BUFFER = 1024
-
-
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
 
-
 s.listen(1)
 
 conn, addr = s.accept()
-
-
 
 # checksum functions needed for calculation checksum
 def checksum(msg):
@@ -89,7 +83,6 @@ else:
     finally:
         f.close()
 
-
 num_packets = len(packet_txt)
 
 # List to hold all packets
@@ -101,8 +94,8 @@ for text in packet_txt:
     # now start constructing the packet
     packet = '';
 
-    source_ip = '127.0.0.1'
-    dest_ip = '127.0.0.1' # or socket.gethostbyname('www.google.com')
+    # source_ip =
+    # dest_ip = '127.0.0.1' # or socket.gethostbyname('www.google.com')
 
     # tcp header fields
     tcp_source = 1234   # source port
@@ -139,17 +132,16 @@ for text in packet_txt:
     user_data = text
 
     # pseudo header fields
-    source_address = socket.inet_aton( source_ip )
-    dest_address = socket.inet_aton(dest_ip)
-    placeholder = 0
-    protocol = socket.IPPROTO_TCP
-    tcp_length = len(tcp_header) + len(user_data)
+    # source_address = socket.inet_aton( source_ip )
+    # dest_address = socket.inet_aton(dest_ip)
+    # placeholder = 0
+    # protocol = socket.IPPROTO_TCP
+    # tcp_length = len(tcp_header) + len(user_data)
+    #
+    # psh = pack('!4s4sBBH' , source_address , dest_address , placeholder , protocol , tcp_length);
+    # psh = psh + tcp_header + user_data;
 
-    psh = pack('!4s4sBBH' , source_address , dest_address , placeholder , protocol , tcp_length);
-    psh = psh + tcp_header + user_data;
-
-    tcp_check = checksum(psh)
-    #print tcp_checksum
+    tcp_check = checksum(tcp_header + user_data)
 
     # make the tcp header again and fill the correct checksum - remember checksum is NOT in network byte order
     tcp_header = pack('!HHLLBBH' , tcp_source, tcp_dest, tcp_seq, tcp_ack_seq, tcp_offset_res, tcp_flags,  tcp_window) + pack('!H' , tcp_check) + pack('!H' , tcp_urg_ptr)
@@ -160,24 +152,12 @@ for text in packet_txt:
     # increment seq_number
     seq_number += 1
 
-
-
     packets.append(packet)
 
-last_message = packet_txt[-1]
-print "checksum: ", tcp_check
-print sys.getsizeof(tcp_header)
 
-#Send the packet finally - the port specified has no effect
-# s.sendto(packet, (dest_ip , 0 ))    # put this in a loop if you want to flood the target
-# base
 
-# window
-
-# final
-
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
+UDP_IP = REMOTE_IP
+UDP_PORT = REMOTE_PORT
 
 timeout = 0
 # standard RTO = 3 according to RFC docs
@@ -190,12 +170,9 @@ base = 0
 window = []
 acknowledged_packets = []
 
-
 window = packets[0:WINDOW_SIZE]
 del packets[0:WINDOW_SIZE]
 
-# print "WINDOW"
-# print window
 # I use 3 seconds as initial RTO, as per RFC standards.
 # If RTT >2, increase RTO to 5 seconds.
 RTO = 3
@@ -203,59 +180,70 @@ RTO = 3
 # start timer
 start = time.time()
 
+#last_base
+last_base = 0
+
+time_stamps = []
+
 # send packets
 for packet in window:
     print "sending packet number" + str(base)
     sock.sendto(packet, (UDP_IP, UDP_PORT))
+    base + 1
 
+base = 0
+data = None
 
-
-now = time.time()
-
-time.sleep(1)
-
-later = time.time()
 ready = []
+print "Packets is size " + str(len(packets))
 
-print "Difference is "+ str(later-now)
+retransmit_counter = 0
 
-while(len(packets) != 0):
+while(len(acknowledged_packets) != num_packets):
     now = time.time()
-    print "NOW " + str(now)
-    print "start " + str(start)
-    print "now - start" + str(now - start)
     if now - start <= RTO:
-        ready = select.select([conn], [], [], 3)
-        print "before recv"
-
+        ready = select.select([conn], [], [], 0.1)
         if ready[0]:
             data = conn.recv(BUFFER)
+            ready = []
 
-        print "after recv"
-        if not data:
-            # timeout += 1
-            # time.sleep(1)
-            break
-        print "STILL SENDING"
+        if data is not None:
 
-        #stop timer
-        print "received data:", data
+            tcp_header = unpack('!HHLLBBHHH' , data[:20])
+            seq_number = tcp_header[2]
+            ack_seq_number = tcp_header[3]
+            fin_number = tcp_header[5]
 
-        tcp_header = unpack('!HHLLBBHHH' , data[:20])
-        seq_number = tcp_header[2]
-        ack_seq_number = tcp_header[3]
-        fin_number = tcp_header[5]
-        print "ack sequence number: " + str(ack_seq_number)
-        if(base == ack_seq_number):
-            print "testasdkfjalskdfj"
-            # received the correct ack
-            acknowledged_packets.append(window[0])
-            del window[0]
-            # add next packet to window
-            window.append(packets[0])
-            base += 1
+            now = time.time()
+            RTT = now - start
+
+            #Increase RTO if RTT comes close to RTO
+            if RTT >= RTO-1:
+                RTO = RTO*2
+            stamp = now, ack_seq_number, RTT
+            time_stamps.append(stamp)
+
+            data = None
+            if(base == ack_seq_number):
+                # received the correct ack
+                acknowledged_packets.append(window[0])
+                del window[0]
+                # add next packet to window
+                if base < 8:
+                    window.append(packets[0])
+                    del packets[0]
+                else:
+                    start = time.time()
+                    for packet in window:
+                        sock.sendto(packet, (UDP_IP, UDP_PORT))
+                base += 1
+            else:
+                retransmit_counter += 1
     else:
-        print "TIMEOUT"
+        if base == last_base:
+            retransmit_counter += 1
+        else:
+            last_base = base
         # resend the packets
         start = time.time()
         for packet in window:
@@ -263,4 +251,10 @@ while(len(packets) != 0):
 
 
 
-print "END OF FILE"
+print "Delivery completed successfully"
+print "Total bytes sent = " + str(num_packets*576)
+print "Segments sent = " + str(num_packets)
+print "Segments retransmitted = " + str(retransmit_counter)
+
+
+# timestamp, source, destination, Sequence #, ACK #, RTT
