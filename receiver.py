@@ -144,7 +144,7 @@ while True:
         tcp_window = socket.htons (5840)    #   maximum allowed window size
         tcp_check = 0
         tcp_urg_ptr = 0
-
+        print seq_number
         tcp_offset_res = (tcp_doff << 4) + 0
         tcp_flags = tcp_fin + (tcp_syn << 1) + (tcp_rst << 2) + (tcp_psh <<3) + (tcp_ack << 4) + (tcp_urg << 5)
 

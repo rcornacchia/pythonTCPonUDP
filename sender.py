@@ -211,7 +211,8 @@ while(len(acknowledged_packets) != num_packets):
             if RTT >= RTO-1:
                 RTO = RTO*2
 
-
+            
+            print ack_seq_number
             p_time = datetime.datetime.fromtimestamp(now).strftime('%H:%M:%S')
             stamp = p_time, ack_seq_number, RTT
             time_stamps.append(stamp)
