@@ -25,9 +25,11 @@ WINDOW_SIZE = 1
 if sys.argv[6] is not None:
     WINDOW_SIZE = int(sys.argv[6])
 
-print WINDOW_SIZE
+
 # TCP connection occurs at startup
-TCP_IP = '127.0.0.1'
+TCP_IP = socket.gethostbyname(socket.gethostname())
+
+print TCP_PORT
 TCP_PORT = ACK_PORT_NUM
 BUFFER = 1024
 
