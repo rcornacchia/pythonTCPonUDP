@@ -1,6 +1,8 @@
 README.txt
 
 
+Size of packets
+
 
 sender
 #usage: sender <filename> <remote_IP> <remote_port> <ac_port_num> <log_filename> <window_size>
@@ -44,6 +46,8 @@ TODO
 -once acks are received
 -account for overflow
 -stdout
+-cite binary tides
+
 
 
 
