@@ -1,12 +1,13 @@
 timestamp	source		destination	Sequence #	ACK #
-03:17:56	Robs-MacBook-Pro.local		127.0.0.1	0	ACK#0
-03:17:56	Robs-MacBook-Pro.local		127.0.0.1	1	ACK#1
-03:17:56	Robs-MacBook-Pro.local		127.0.0.1	2	ACK#2
-03:17:59	Robs-MacBook-Pro.local		127.0.0.1	3	ACK#3
-03:17:59	Robs-MacBook-Pro.local		127.0.0.1	4	ACK#4
-03:17:59	Robs-MacBook-Pro.local		127.0.0.1	5	ACK#5
-03:18:02	Robs-MacBook-Pro.local		127.0.0.1	6	ACK#6
-03:18:02	Robs-MacBook-Pro.local		127.0.0.1	7	ACK#7
-03:18:02	Robs-MacBook-Pro.local		127.0.0.1	8	ACK#8
-03:18:02	Robs-MacBook-Pro.local		127.0.0.1	9	ACK#9
-03:18:02	Robs-MacBook-Pro.local		127.0.0.1	10	ACK#10
+04:09:16	minsk		128.59.10.226	0	ACK#0
+04:09:16	minsk		128.59.10.226	1	ACK#1
+04:09:16	minsk		128.59.10.226	2	ACK#2
+04:09:19	minsk		128.59.10.226	2	ACK#2
+04:09:19	minsk		128.59.10.226	3	ACK#3
+04:09:19	minsk		128.59.10.226	4	ACK#4
+04:09:22	minsk		128.59.10.226	5	ACK#5
+04:09:22	minsk		128.59.10.226	6	ACK#6
+04:09:22	minsk		128.59.10.226	7	ACK#7
+04:09:25	minsk		128.59.10.226	8	ACK#8
+04:09:25	minsk		128.59.10.226	9	ACK#9
+04:09:25	minsk		128.59.10.226	10	ACK#10
