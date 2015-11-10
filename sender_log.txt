@@ -1,12 +1,14 @@
 timestamp	source		destination	Sequence #	ACK #	RTT
-16:29:29	sofia		vanilla	0	ACK#0	2.0982670784
-16:29:29	sofia		vanilla	1	ACK#1	2.09856104851
-16:29:29	sofia		vanilla	2	ACK#2	2.09859204292
-16:29:35	sofia		vanilla	3	ACK#3	2.09804606438
-16:29:35	sofia		vanilla	4	ACK#4	2.09828400612
-16:29:35	sofia		vanilla	5	ACK#5	2.09831619263
-16:29:41	sofia		vanilla	6	ACK#6	2.09752607346
-16:29:41	sofia		vanilla	7	ACK#7	2.10079813004
-16:29:41	sofia		vanilla	8	ACK#8	2.10084104538
-16:29:43	sofia		vanilla	9	ACK#9	2.052298069
-16:29:43	sofia		vanilla	10	ACK#10	0.0443339347839
+17:25:35	sofia		vanilla	1	ACK#1	2.0988919735
+17:25:41	sofia		vanilla	0	ACK#0	2.09704303741
+17:25:41	sofia		vanilla	1	ACK#1	2.09728097916
+17:25:41	sofia		vanilla	2	ACK#2	2.0974650383
+17:25:47	sofia		vanilla	3	ACK#3	2.09968805313
+17:25:47	sofia		vanilla	4	ACK#4	2.09993100166
+17:25:47	sofia		vanilla	5	ACK#5	2.10016202927
+17:25:53	sofia		vanilla	6	ACK#6	2.098954916
+17:25:53	sofia		vanilla	8	ACK#8	2.09915399551
+17:25:59	sofia		vanilla	7	ACK#7	2.09977006912
+17:25:59	sofia		vanilla	8	ACK#8	2.0999751091
+17:26:01	sofia		vanilla	9	ACK#9	2.05311083794
+17:26:01	sofia		vanilla	10	ACK#10	0.0443329811096

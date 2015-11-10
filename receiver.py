@@ -67,6 +67,7 @@ packet_corrupt = False
 
 while True:
     # Add try here
+    packet_corrupt = False
     try:
         data, addr = sock.recvfrom(576)
     except:
@@ -129,7 +130,7 @@ while True:
             expected_seq_num += 1
         else:
             packet_in_order = False
-        print "expected: " + str(expected_seq_num)
+        print "expected: " + str(expected_seq_num-1)
         print "Got pack: " + str(seq_number)        
         # if correct packet is received in order, then pack ACK and send
         # now start constructing the packet
