@@ -2,6 +2,7 @@ import socket
 import sys
 import time
 import select
+import datetime
 from struct import *
 
 #usage: sender <filename> <remote_IP> <remote_port> <ack_port_num> <log_filename> <window_size>
@@ -17,11 +18,12 @@ REMOTE_PORT = int(sys.argv[3])
 ACK_PORT_NUM = int(sys.argv[4])
 
 # argv[5] = log_filename
-# log_file = argv[5]
+log_file = sys.argv[5]
+
 WINDOW_SIZE = 1
 # argv[6] = window_size
-if sys.argv[5] is not None:
-    WINDOW_SIZE = int(sys.argv[5])
+if sys.argv[6] is not None:
+    WINDOW_SIZE = int(sys.argv[6])
 
 print WINDOW_SIZE
 # TCP connection occurs at startup
@@ -94,12 +96,10 @@ for text in packet_txt:
     # now start constructing the packet
     packet = '';
 
-    # source_ip =
-    # dest_ip = '127.0.0.1' # or socket.gethostbyname('www.google.com')
 
     # tcp header fields
-    tcp_source = 1234   # source port
-    tcp_dest = 4444   # destination port
+    tcp_source = 5005   # source port
+    tcp_dest = REMOTE_PORT   # destination port
     tcp_seq = seq_number # multiply by size of data
     tcp_ack_seq = 0
     tcp_doff = 5    #4 bit field, size of tcp header, 5 * 4 = 20 bytes
@@ -130,16 +130,6 @@ for text in packet_txt:
     tcp_header = pack('!HHLLBBHHH' , tcp_source, tcp_dest, tcp_seq, tcp_ack_seq, tcp_offset_res, tcp_flags,  tcp_window, tcp_check, tcp_urg_ptr)
 
     user_data = text
-
-    # pseudo header fields
-    # source_address = socket.inet_aton( source_ip )
-    # dest_address = socket.inet_aton(dest_ip)
-    # placeholder = 0
-    # protocol = socket.IPPROTO_TCP
-    # tcp_length = len(tcp_header) + len(user_data)
-    #
-    # psh = pack('!4s4sBBH' , source_address , dest_address , placeholder , protocol , tcp_length);
-    # psh = psh + tcp_header + user_data;
 
     tcp_check = checksum(tcp_header + user_data)
 
@@ -187,7 +177,6 @@ time_stamps = []
 
 # send packets
 for packet in window:
-    print "sending packet number" + str(base)
     sock.sendto(packet, (UDP_IP, UDP_PORT))
     base + 1
 
@@ -202,7 +191,7 @@ retransmit_counter = 0
 while(len(acknowledged_packets) != num_packets):
     now = time.time()
     if now - start <= RTO:
-        ready = select.select([conn], [], [], 0.1)
+        ready = select.select([conn], [], [], 0.00001)
         if ready[0]:
             data = conn.recv(BUFFER)
             ready = []
@@ -220,7 +209,10 @@ while(len(acknowledged_packets) != num_packets):
             #Increase RTO if RTT comes close to RTO
             if RTT >= RTO-1:
                 RTO = RTO*2
-            stamp = now, ack_seq_number, RTT
+
+
+            p_time = datetime.datetime.fromtimestamp(now).strftime('%H:%M:%S')
+            stamp = p_time, ack_seq_number, RTT
             time_stamps.append(stamp)
 
             data = None
@@ -258,3 +250,7 @@ print "Segments retransmitted = " + str(retransmit_counter)
 
 
 # timestamp, source, destination, Sequence #, ACK #, RTT
+lf = open(log_file, "wb")
+lf.write("timestamp\tsource\t\tdestination\tSequence #\tACK #\tRTT\n")
+for stamp in time_stamps:
+    lf.write(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(REMOTE_IP) + "\t" + str(stamp[1]) + "\tACK#" + str(stamp[1]) + "\t" + str(stamp[2]) + "\n")

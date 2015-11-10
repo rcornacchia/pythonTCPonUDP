@@ -1,16 +1,25 @@
 import socket
 import sys
 import select
+import time
+import datetime
 from struct import *
 
 
-TCP_IP = '127.0.0.1'
-TCP_PORT = int(sys.argv[1])
+# usage: receiver <filename> <listening_port> <sender_IP> <sender_port> <log_filename>
+of = open(sys.argv[1], "wb")
+LISTENING_PORT = int(sys.argv[2])
+TCP_IP = sys.argv[3]
+TCP_PORT = int(sys.argv[4])
+log_file = sys.argv[5]
+
+
 BUFFER = 1024
 ack0 = "ack0"
 tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcp_sock.connect((TCP_IP, TCP_PORT))
 
+time_stamps = []
 
 # checksum functions needed for calculation checksum
 def checksum(msg):
@@ -40,24 +49,18 @@ def checksum(msg):
         s = abs(s)
     return s
 
+UDP_IP = socket.gethostname()
+UDP_PORT = LISTENING_PORT
 
-
-
-# TCP_OPEN = False
-
-
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-#just a placeholder for tcp_socket
-# tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
 expected_seq_num = 0
 received_packets = []
 message = []
-
+time_stamps = []
+stamp = ""
 
 while True:
     # Add try here
@@ -67,21 +70,22 @@ while True:
         pass
 
     if data:
+        now = time.time()
+
         received_packets.append(data)
         tcp_header = unpack('!HHLLBBHHH' , data[:20])
-        print tcp_header
         seq_number = tcp_header[2]
         fin_number = tcp_header[5]
+
+        p_time = datetime.datetime.fromtimestamp(now).strftime('%H:%M:%S')
+        stamp = p_time, seq_number
+        time_stamps.append(stamp)
+
+
         packet_checksum = tcp_header[7]
-        print "Sequence number = " + str(seq_number)
-        print "FIN_number = " + str(fin_number)
         message.append(data[20:])
-
-
-
-
-
-        #TODO Check to see if corrupt by using checksum function
+        of.write(data[20:])
+        # Check to see if corrupt by using checksum function
         # now start constructing the packet
         packet = '';
 
@@ -89,8 +93,8 @@ while True:
         dest_ip = '127.0.0.1' # or socket.gethostbyname('www.google.com')
 
         # tcp header fields
-        tcp_source = 1234   # source port
-        tcp_dest = 4444   # destination port
+        tcp_source = tcp_header[0]   # source port
+        tcp_dest = tcp_header[1]   # destination port
         tcp_seq = seq_number # multiply by size of data
         tcp_ack_seq = 0
         tcp_doff = 5    #4 bit field, size of tcp header, 5 * 4 = 20 bytes
@@ -103,7 +107,6 @@ while True:
         tcp_ack = 0
         tcp_urg = 0
 
-
         tcp_window = socket.htons (5840)    #   maximum allowed window size
         tcp_check = 0
         tcp_urg_ptr = 0
@@ -115,41 +118,21 @@ while True:
         tcp_header = pack('!HHLLBBHHH' , tcp_source, tcp_dest, tcp_seq, tcp_ack_seq, tcp_offset_res, tcp_flags,  tcp_window, tcp_check, tcp_urg_ptr)
 
         user_data = data[20:]
-
-        # pseudo header fields
-        # source_address = socket.inet_aton( source_ip )
-        # dest_address = socket.inet_aton(dest_ip)
-        # placeholder = 0
-        # protocol = socket.IPPROTO_TCP
-        # tcp_length = len(tcp_header) + len(user_data)
-        #
-        # psh = pack('!4s4sBBH' , source_address , dest_address , placeholder , protocol , tcp_length);
-        # psh = psh + tcp_header + user_data;
-
         new_checksum = checksum(tcp_header + user_data)
-
-        print new_checksum
-        print packet_checksum
         if new_checksum != packet_checksum:
             print "checksum does not match, corruption detected."
             break
-
-        #TODO Check to see if in order
+        # Check to see if in order
         if seq_number == expected_seq_num:
             expected_seq_num += 1
         else:
             break
-
         # if correct packet is received in order, then pack ACK and send
         # now start constructing the packet
         packet = '';
-
-        source_ip = '127.0.0.1'
-        dest_ip = '127.0.0.1' # or socket.gethostbyname('www.google.com')
-
         # tcp header fields
-        tcp_source = 1234   # source port
-        tcp_dest = 4444   # destination port
+        tcp_source = 5555   # source port
+        tcp_dest = 5555 # destination port
         tcp_seq = int(seq_number) # multiply by size of data
         tcp_ack_seq = int(seq_number)
         tcp_doff = 5    #4 bit field, size of tcp header, 5 * 4 = 20 bytes
@@ -170,18 +153,8 @@ while True:
         # the ! in the pack format string means network order
         tcp_header = pack('!HHLLBBHHH' , tcp_source, tcp_dest, tcp_seq, tcp_ack_seq, tcp_offset_res, tcp_flags,  tcp_window, tcp_check, tcp_urg_ptr)
 
-        # pseudo header fields
-        source_address = socket.inet_aton(source_ip)
-        dest_address = socket.inet_aton(dest_ip)
-        placeholder = 0
-        protocol = socket.IPPROTO_TCP
-        tcp_length = len(tcp_header)
 
-        psh = pack('!4s4sBBH' , source_address , dest_address , placeholder , protocol , tcp_length);
-        psh = psh + tcp_header;
-
-        tcp_check = checksum(psh)
-        #print tcp_checksum
+        tcp_check = checksum(tcp_header)
 
         # make the tcp header again and fill the correct checksum - remember checksum is NOT in network byte order
         tcp_header = pack('!HHLLBBH' , tcp_source, tcp_dest, tcp_seq, tcp_ack_seq, tcp_offset_res, tcp_flags,  tcp_window) + pack('!H' , tcp_check) + pack('!H' , tcp_urg_ptr)
@@ -189,28 +162,15 @@ while True:
         # final full packet - syn packets dont have any data
         packet = tcp_header
 
-
-
-
-
-        print "received message:"
-
-        print sys.getsizeof(tcp_header)
-        print sys.getsizeof(data[20:])
-        # print "data:", data[20:]
-
-
         tcp_sock.send(packet)
         if fin_number == 1:
             print "Delivery completed successfully"
             # write message to logfile
             # if message is stdout, just print the output
+            lf = open(log_file, "wb")
+            lf.write("timestamp\tsource\t\tdestination\tSequence #\tACK #\n")
+            for stamp in time_stamps:
+                lf.write(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(TCP_IP) + "\t" + str(stamp[1]) + "\tACK#" + str(stamp[1]) + "\n")
+
+
             exit()
-
-        # if FIN == 1, set expected_seq_num = 0 (ready for next message)
-
-
-
-
-    # check to see if packet is FIN
-    # return sequence number
