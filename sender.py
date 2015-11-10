@@ -198,41 +198,52 @@ while(len(acknowledged_packets) != num_packets):
             ready = []
 
         if data is not None:
-
-            tcp_header = unpack('!HHLLBBHHH' , data[:20])
-            seq_number = tcp_header[2]
-            ack_seq_number = tcp_header[3]
-            fin_number = tcp_header[5]
-
-            now = time.time()
-            RTT = now - start
-
-            #Increase RTO if RTT comes close to RTO
-            if RTT >= RTO-1:
-                RTO = RTO*2
-
+            print "DATA IS THIS BIG: " + str(sys.getsizeof(data))
+            print data
             
-            print ack_seq_number
-            p_time = datetime.datetime.fromtimestamp(now).strftime('%H:%M:%S')
-            stamp = p_time, ack_seq_number, RTT
-            time_stamps.append(stamp)
-
-            data = None
-            if(base == ack_seq_number):
-                # received the correct ack
-                acknowledged_packets.append(window[0])
-                del window[0]
-                # add next packet to window
-                if base < 8:
-                    window.append(packets[0])
-                    del packets[0]
-                else:
-                    start = time.time()
-                    for packet in window:
-                        sock.sendto(packet, (UDP_IP, UDP_PORT))
-                base += 1
+            slices = []
+            if sys.getsizeof(data) > 59:
+                print "greater"
+                slices.append(data[:20])
+                slices.append(data[20:])
             else:
-                retransmit_counter += 1
+                print "not greater"
+                slices.append(data[:20])
+            for s in slices:
+                tcp_header = unpack('!HHLLBBHHH' , s)
+                ack_seq_number = tcp_header[3]
+                print ack_seq_number
+                fin_number = tcp_header[5]
+
+                now = time.time()
+                RTT = now - start
+
+                #Increase RTO if RTT comes close to RTO
+                if RTT >= RTO-1:
+                    RTO = RTO*2
+
+                
+                print ack_seq_number
+                p_time = datetime.datetime.fromtimestamp(now).strftime('%H:%M:%S')
+                stamp = p_time, ack_seq_number, RTT
+                time_stamps.append(stamp)
+
+                data = None
+                if(base == ack_seq_number):
+                    # received the correct ack
+                    acknowledged_packets.append(window[0])
+                    del window[0]
+                    # add next packet to window
+                    if base < 8:
+                        window.append(packets[0])
+                        del packets[0]
+                    else:
+                        start = time.time()
+                        for packet in window:
+                            sock.sendto(packet, (UDP_IP, UDP_PORT))
+                    base += 1
+                else:
+                    retransmit_counter += 1
     else:
         if base == last_base:
             retransmit_counter += 1

@@ -121,16 +121,17 @@ while True:
             print "checksum does not match, corruption detected."
             break
         # Check to see if in order
-        # if seq_number == expected_seq_num:
-        #     expected_seq_num += 1
-        # else:
-        #     break
+        print expected_seq_num
+        if seq_number == expected_seq_num:
+             expected_seq_num += 1
+        else:
+             break
         # if correct packet is received in order, then pack ACK and send
         # now start constructing the packet
         packet = '';
         # tcp header fields
         tcp_source = LISTENING_PORT   # source port
-        tcp_dest = TCP_PORT # destination port
+        tcp_dest = LISTENING_PORT # destination port
         tcp_seq = int(seq_number) # multiply by size of data
         tcp_ack_seq = int(seq_number)
         tcp_doff = 5    #4 bit field, size of tcp header, 5 * 4 = 20 bytes
@@ -144,7 +145,6 @@ while True:
         tcp_window = socket.htons (5840)    #   maximum allowed window size
         tcp_check = 0
         tcp_urg_ptr = 0
-        print seq_number
         tcp_offset_res = (tcp_doff << 4) + 0
         tcp_flags = tcp_fin + (tcp_syn << 1) + (tcp_rst << 2) + (tcp_psh <<3) + (tcp_ack << 4) + (tcp_urg << 5)
 
@@ -159,6 +159,9 @@ while True:
 
         # final full packet - syn packets dont have any data
         packet = tcp_header
+        print seq_number
+
+        print packet
 
         tcp_sock.send(packet)
         if fin_number == 1:
