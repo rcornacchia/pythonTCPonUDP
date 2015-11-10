@@ -2,7 +2,7 @@
 #define SYSDEP_H
 
 
-#if defined(unix) || defined(__unix) || defined (__unix__) || defined(__APPLE__)
+#if defined(unix) || defined(__unix) || defined (__unix__)
 /* Code for Unix.  Any Unix compiler should define one of the above three
  * symbols. */
 

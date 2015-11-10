@@ -10,7 +10,7 @@ from struct import *
 # argv[1] = file_to_send
 # argv[2] = remote_ip
 REMOTE_IP = str(sys.argv[2])
-
+print(REMOTE_IP)
 # argv[3] = remote_port
 REMOTE_PORT = int(sys.argv[3])
 
@@ -155,6 +155,7 @@ timeout = 0
 RTO = 3
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind(('', 3333))
 
 base = 0
 # fill window with packets
