@@ -99,7 +99,7 @@ for text in packet_txt:
 
 
     # tcp header fields
-    tcp_source = ACK_PORT_NUM   # source port
+    tcp_source = ACK_PORT   # source port
     tcp_dest = REMOTE_PORT   # destination port
     tcp_seq = seq_number # multiply by size of data
     tcp_ack_seq = 0
@@ -192,7 +192,7 @@ retransmit_counter = 0
 while(len(acknowledged_packets) != num_packets):
     now = time.time()
     if now - start <= RTO:
-        ready = select.select([conn], [], [], 0.00001)
+        ready = select.select([conn], [], [], 0.001)
         if ready[0]:
             data = conn.recv(BUFFER)
             ready = []
