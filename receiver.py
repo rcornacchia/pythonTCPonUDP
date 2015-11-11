@@ -12,7 +12,7 @@ LISTENING_PORT = int(sys.argv[2])
 TCP_IP = sys.argv[3]
 TCP_PORT = int(sys.argv[4])
 log_file = sys.argv[5]
-
+    
 
 BUFFER = 1024
 ack0 = "ack0"
@@ -122,16 +122,16 @@ while True:
         user_data = data[20:]
         new_checksum = checksum(tcp_header + user_data)
         if new_checksum != packet_checksum:
-            print "checksum does not match, corruption detected."
+            #print "checksum does not match, corruption detected."
             packet_corrupt = True
         # Check to see if in order
-        print expected_seq_num
+        #print expected_seq_num
         if seq_number == expected_seq_num and packet_corrupt == False:
             expected_seq_num += 1
         else:
             packet_in_order = False
-        print "expected: " + str(expected_seq_num-1)
-        print "Got pack: " + str(seq_number)        
+        #print "expected: " + str(expected_seq_num-1)
+        #print "Got pack: " + str(seq_number)        
         # if correct packet is received in order, then pack ACK and send
         # now start constructing the packet
         packet = '';
@@ -165,19 +165,26 @@ while True:
 
         # final full packet - syn packets dont have any data
         packet = tcp_header
-        print seq_number
+        print "RECEIVED PACKET: " + str(seq_number)
 
         if packet_corrupt == False:
-            print packet
+            #print packet
             tcp_sock.send(packet)
             if fin_number == 1:
-                print "Delivery completed successfully"
+                #print "Delivery completed successfully"
                 # write message to logfile
                 # if message is stdout, just print the output
-                lf = open(log_file, "wb")
-                lf.write("timestamp\tsource\t\tdestination\tSequence #\tACK #\n")
-                for stamp in time_stamps:
-                    lf.write(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(TCP_IP) + "\t" + str(stamp[1]) + "\tACK#" + str(stamp[1]) + "\n")
+                if log_file == "stdout":
+                    print("timestamp\tsource\t\tdestination\tSequence #\tACK #")
+                    for stamp in time_stamps:
+                        print(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(TCP_IP) + "\t" + str(stamp[1]) + "\tACK#" + str(stamp[1]))
+
+
+                else:
+                    lf = open(log_file, "wb")
+                    lf.write("timestamp\tsource\t\tdestination\tSequence #\tACK #\n")
+                    for stamp in time_stamps:
+                        lf.write(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(TCP_IP) + "\t" + str(stamp[1]) + "\tACK#" +"\t" + str(stamp[1]) + "\n")
 
 
                 exit()

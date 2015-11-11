@@ -10,7 +10,7 @@ from struct import *
 # argv[1] = file_to_send
 # argv[2] = remote_ip
 REMOTE_IP = str(sys.argv[2])
-print(REMOTE_IP)
+#print(REMOTE_IP)
 # argv[3] = remote_port
 REMOTE_PORT = int(sys.argv[3])
 
@@ -77,7 +77,7 @@ else:
 
     try:
         text = f.read(556)
-        print len(text)
+        #print len(text)
         packet_txt.append(text)
         while text != "":
             text = f.read(556)
@@ -186,7 +186,7 @@ base = 0
 data = None
 
 ready = []
-print "Packets is size " + str(len(packets))
+#print "Packets is size " + str(len(packets))
 
 retransmit_counter = 0
 
@@ -199,21 +199,23 @@ while(len(acknowledged_packets) != num_packets):
             ready = []
 
         if data is not None:
-            print "DATA IS THIS BIG: " + str(sys.getsizeof(data))
-            print data
+            #print "DATA IS THIS BIG: " + str(sys.getsizeof(data))
+            #print data
             
             slices = []
             if sys.getsizeof(data) > 59:
-                print "greater"
+                #print "greater"
                 slices.append(data[:20])
                 slices.append(data[20:])
             else:
-                print "not greater"
+                #print "not greater"
                 slices.append(data[:20])
             for s in slices:
+                if s is None:
+                    exit()
                 tcp_header = unpack('!HHLLBBHHH' , s)
                 ack_seq_number = tcp_header[3]
-                print ack_seq_number
+                #print ack_seq_number
                 fin_number = tcp_header[5]
 
                 now = time.time()
@@ -224,7 +226,7 @@ while(len(acknowledged_packets) != num_packets):
                     RTO = RTO*2
 
                 
-                print ack_seq_number
+                #print ack_seq_number
                 p_time = datetime.datetime.fromtimestamp(now).strftime('%H:%M:%S')
                 stamp = p_time, ack_seq_number, RTT
                 time_stamps.append(stamp)
@@ -264,7 +266,16 @@ print "Segments retransmitted = " + str(retransmit_counter)
 
 
 # timestamp, source, destination, Sequence #, ACK #, RTT
+if log_file == "stdout":
+    print("timestamp\tsource\t\tdestination\tSequence #\tACK #")
+    for stamp in time_stamps:
+        print(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(TCP_IP) + "\t" + str(stamp[1]) + "\tACK#" + str(stamp[1]))
+    
+    exit()
+
+
+
 lf = open(log_file, "wb")
 lf.write("timestamp\tsource\t\tdestination\tSequence #\tACK #\tRTT\n")
 for stamp in time_stamps:
-    lf.write(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(REMOTE_IP) + "\t" + str(stamp[1]) + "\tACK#" + str(stamp[1]) + "\t" + str(stamp[2]) + "\n")
+    lf.write(str(stamp[0]) + "\t" + socket.gethostname() + "\t\t" + str(REMOTE_IP) + "\t\t" + str(stamp[1]) + "\t\tACK#" + str(stamp[1]) + "\t" + str(stamp[2]) + "\n")
