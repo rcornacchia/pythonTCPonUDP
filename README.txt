@@ -51,7 +51,9 @@ The checksum accounts for large numbers of packets, by using modulus
 to ensure a small checksum number.
 
 
-
+Specify to stdout works as described in the specifications.
+Use stdout as the file and both the sender and receiver will print the log
+file to console.
 
 
 TESTING:
