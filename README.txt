@@ -19,6 +19,94 @@ I tested with the following commands, run in this order:
 
 
 
+
+
+a) TCP Header:
+From RFC 793
+
+0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          Source Port          |       Destination Port        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        Sequence Number                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Acknowledgment Number                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Data |           |U|A|P|R|S|F|                               |
+   | Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+   |       |           |G|K|H|T|N|N|                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           Checksum            |         Urgent Pointer        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Options                    |    Padding    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   # tcp header fields
+   tcp_source = 1234   # source port
+   tcp_dest = 80   # destination port
+   tcp_seq = 454
+   tcp_ack_seq = 0
+   tcp_doff = 5    #4 bit field, size of tcp header, 5 * 4 = 20 bytes
+   #tcp flags
+   tcp_fin = 0
+   tcp_syn = 1
+   tcp_rst = 0
+   tcp_psh = 0
+   tcp_ack = 0
+   tcp_urg = 0
+   tcp_window = socket.htons (5840)    #   maximum allowed window size
+   tcp_check = 0
+   tcp_urg_ptr = 0
+
+   tcp_offset_res = (tcp_doff << 4) + 0
+   tcp_flags = tcp_fin + (tcp_syn << 1) + (tcp_rst << 2) + (tcp_psh <<3) + (tcp_ack << 4) + (tcp_urg << 5)
+
+   # the ! in the pack format string means network order
+   tcp_header = pack('!HHLLBBHHH' , tcp_source, tcp_dest, tcp_seq, tcp_ack_seq, tcp_offset_res, tcp_flags,  tcp_window, tcp_check, tcp_urg_ptr)
+
+
+
+b) States
+
+Sender:
+    On startup, it only enters SENDING STATE after receiving a connection:
+    NO_TCP_CONNECTION -------> SENDING STATE
+
+    after sending a message:
+    SENDING STATE -------> RECEIVING STATE
+
+    after receiving an ACK or Timeout:
+    RECEIVING STATE -------> SENDING STATE
+
+Receiver:
+
+    On startup, it enters RECEIVING STATE after receiving a connection:
+    NO_TCP_CONNECTION -------> RECEIVING STATE
+
+    after receiving a message:
+    RECEIVING STATE -------> SEND_ACK
+
+    after sending an ACK:
+    SEND_ACK ----> RECEIVING STATE
+
+c) The loss recovery Mechanism
+
+I used a simple Go-Back-N with a sliding window.
+The sender will send all the packets in a window and wait for acks.
+It will only slide the window, once it receives an ACK for the base packet.
+The base packet is the one with the lowest seq_number.
+If a timeout occurs it will resend all of the packets.
+
+If it receives an ACK it will send the next window of packets.
+
+After extensive testing on CLIC, the program runs as specified in the instructions.
+I encountered a lot of trouble once I started to incorporate the proxy, but I've
+worked out the kinks, and the app works well now. :)
+
+
 -TCP Packet size = 576
     -20 byte tcp_header + 556 byte data segment
     -RFC --> RTO initially set to 3 seconds
@@ -122,7 +210,7 @@ timestamp source    destination   Sequence #  ACK #   RTT
 
 
 RECEIVER_LOG:
-timestamp source  destination   Sequence #  ACK 
+timestamp source  destination   Sequence #  ACK
 19:22:02  delhi   128.59.15.30  1           ACK#1
 19:22:08  delhi   128.59.15.30  0           ACK#0
 19:22:08  delhi   128.59.15.30  1           ACK#1
